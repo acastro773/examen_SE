@@ -43,9 +43,9 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-#define LED_INIT() LED_RED_INIT(LOGIC_LED_ON)
-#define LED_TOGGLE() LED_RED_TOGGLE()
-
+int blink = 0;
+int blred = 0;
+int blgreen = 0;
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
@@ -134,11 +134,11 @@ void led_red_off(void) {
 }
 
 int check_led_green(void) {
- return (!(GPIOD->PCOR & (1 << 5)));
+ return (!(GPIOC->PSOR & (1 << 5)));
 }
 
 int check_led_red(void) {
- return (!(GPIOE->PCOR & (1 << 29)));
+ return (!(GPIOC->PSOR & (1 << 29)));
 }
 
 void PORTDIntHandler(void) {
@@ -169,14 +169,9 @@ int main(void)
   int num = 0;
   int cont = 0;
   int length = 0;
-  int blink = 0;
-  int blred = 0;
-  int blgreen = 0;
 
   irclk_ini(); // Enable internal ref clk to use by LCD
   lcd_ini();
-  bt1_init();
-  bt2_init();
   led_red_init();
   led_green_init();
   /* Init board hardware. */
@@ -184,6 +179,8 @@ int main(void)
   BOARD_BootClockRUN();
   BOARD_InitDebugConsole();
   lcd_display_dec(cont);
+  bt1_init();
+  bt2_init();
 
   PRINTF("\r\nReinicio!\r\n");
 
@@ -238,15 +235,16 @@ int main(void)
 				PRINTF("LED VERMELLO OFF\r\n");
 			}
 		} else if (strcmp(str, "blink") == 0) {
-			if (blink) {
+			if (!blink) {
 				if (check_led_red()) {
 					blred = 1;
-					PRINTF("Blink do led vermello:\r\n");
+					PRINTF("Blink do led vermello\r\n");
 				}
 				if (check_led_green()) {
 					blgreen = 1;
-					PRINTF("Blink do led verde:\r\n");
+					PRINTF("Blink do led verde\r\n");
 				}
+				blink = 1;
 			} else {
 				blink = 0;
 				if (blred) {
@@ -257,6 +255,16 @@ int main(void)
 					blgreen = 0;
 					led_green_on();
 				}
+				PRINTF("Blink terminado\r\n");
+			}
+		} else if (strcmp(str, "off") == 0) {
+			if (check_led_green()) {
+				led_green_off();
+				PRINTF("LED VERDE OFF\r\n");
+			}
+			if (check_led_red()) {
+				led_red_off();
+				PRINTF("LED VERMELLO OFF\r\n");
 			}
 		} else
 			PRINTF("Comando non reconhecido\r\n");
